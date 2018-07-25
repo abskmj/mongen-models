@@ -53,6 +53,15 @@ describe('User', () => {
         expect(savedUser).to.have.property('_salt');
     });
     
+    it('should validate password', async() => {
+        // create a new user
+        let savedUser = await User.create(userData);
+        
+        // validate password
+        let result = savedUser.validatePassword('test123');
+        expect(result).to.equal(true);
+    });
+    
     it('should login with email', async() => {
         // create a new user
         let savedUser = await User.create(userData);
