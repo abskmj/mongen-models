@@ -6,30 +6,23 @@ const config = require('../config.json');
 describe('User', () => {
     let mongoose;
     let User;
-    let userData;
+    let userData = {
+        name: "ABC",
+        email: "abc@xyz.com",
+        password: 'test123'
+    };
 
-    before((done) => {
-        
-        
-        mongen.init({
-                mongo: config.mongo,
-                path: __dirname + '/models'
-            })
-            .then((mongooseInstance) => {
-                mongoose = mongooseInstance;
-                User = mongoose.model('User');
-                userData ={
-                    name: "ABC",
-                    email: "abc@xyz.com",
-                    password: 'test123'
-                };
-                done();
-            });
+    before(async() => {
+        let mongooseInstance = await mongen.init({
+            mongo: config.mongo,
+            path: __dirname + '/models'
+        });
+        mongoose = mongooseInstance;
+        User = mongoose.model('User');
     });
 
-    beforeEach(async () => {
-        await  mongoose.connection.dropDatabase();
-        console.log('cleared database');
+    beforeEach(async() => {
+        await mongoose.connection.dropDatabase();
     });
 
     it('should record timestamp of creation', async() => {
@@ -37,53 +30,48 @@ describe('User', () => {
         expect(savedUser).to.have.property('createdAt');
     });
 
-    it('should record timestamp of modification', async () => {
+    it('should record timestamp of modification', async() => {
+        // create a new user
         let savedUser = await User.create(userData);
-        console.log(savedUser);
-        expect(savedUser).to.have.property('updatedAt');
-        
-        let users = await User.findOne({ id: savedUser.id });
-        
-        console.log(users);
+        expect(savedUser).to.have.property('modifiedAt');
+
+        // find the same user and modify it
+        let foundUser = await User.findById(savedUser.id);
+        foundUser.name = 'XYZ';
+        let savedUser2 = await foundUser.save();
+
+        // check that updatedAt timestamp is changed
+        expect(savedUser.modifiedAt).to.not.equal(savedUser2.modifiedAt);
+
     });
 
-    // it('should set a password', (done) => {
-    //     user.save()
-    //         .then((savedUser) => {
-    //             expect(savedUser).to.have.property('_hash');
-    //             expect(savedUser).to.have.property('_salt');
-    //             done();
-    //         });
-    // })
+    it('should set a password', async() => {
+        // create a new user
+        let savedUser = await User.create(userData);
+        
+        expect(savedUser).to.have.property('_hash');
+        expect(savedUser).to.have.property('_salt');
+    });
+    
+    it('should login with email', async() => {
+        // create a new user
+        let savedUser = await User.create(userData);
+        
+        // get a JWT
+        let jwt = await User.login({ email: userData.email , password: userData. password});
+        expect(jwt.split('.')).to.have.lengthOf(3);
+    });
+    
+    it('should translate JWT', async() => {
+        // create a new user
+        let savedUser = await User.create(userData);
+        
+        // get a JWT
+        let jwt = await User.login({ email: userData.email , password: userData. password});
+        expect(jwt.split('.')).to.have.lengthOf(3);
+        
+        // translate the same JWT to get the user back
+        let user = await User.translateToken(jwt);
+        expect(user.id).to.equal(savedUser.id);
+    });
 });
-
-// mongen.init({
-//         mongo: 'mongodb://developer:dev%23123@ds245661.mlab.com:45661/dev-playground',
-//         path: __dirname + '/models'
-//     })
-//     .then((mongoose) => {
-//         mongoose.connection.dropDatabase()
-//             .then(() => {
-
-//                 .then((user) => {
-//                     console.log(user.toJSON());
-
-//                     return User.login({
-//                         email: 'abc@xyz.com',
-//                         password: 'test123'
-//                     });
-
-//                 }).then((jwt) => {
-//                     console.log('JWT:', jwt);
-
-//                     return User.translateToken(jwt);
-//                 }).then(user => {
-//                     console.log(user.toJSON());
-//                 }).catch(error => {
-//                     console.error(error);
-//                 });
-
-//             });
-//     }).catch(error => {
-//         console.error(error);
-//     });

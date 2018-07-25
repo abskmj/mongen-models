@@ -3,13 +3,13 @@ const mongoose = require("mongoose");
 module.exports = {
     name: "User",
     plugins: {
-        password: true
+        audit: true,
+        password: true,
+        jwt: true
     },
     schema: {
         name: String,
         email: String
     },
-    options: {
-        timestamps: true
-    }
+    options: {}
 }
