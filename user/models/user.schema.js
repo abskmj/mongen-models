@@ -5,7 +5,9 @@ module.exports = {
     plugins: {
         audit: true,
         password: true,
-        jwt: true
+        jwt: {
+            secret : 'changed'
+        }
     },
     schema: {
         name: String,

@@ -4,7 +4,13 @@
 
 const JWTUtility = require('@abskmj/jwt-utility');
 
-module.exports = (schema, options) => {
+module.exports = (schema, {
+    hash = 'HS256',
+    issuer = 'AuthServer',
+    subject = 'Login',
+    expiry = 120000,
+    secret = 'changeit'
+}) => {
     schema.statics.login = function(data) {
         try {
             return this.findOne({ email: data.email })
@@ -12,14 +18,14 @@ module.exports = (schema, options) => {
                     if (user) {
                         if (user.validatePassword(data.password)) {
 
-                            let jwt = JWTUtility.getFactory('HS256')
-                                .setIssuer('AuthServer')
-                                .setSubject('Login')
-                                .setExpiry(10)
+                            let jwt = JWTUtility.getFactory(hash)
+                                .setIssuer(issuer)
+                                .setSubject(subject)
+                                .setExpiry(expiry)
                                 .setClaims({
                                     user: user._id.toString(),
                                 })
-                                .sign('secret key');
+                                .sign(secret);
 
                             return Promise.resolve(jwt);
                         }
@@ -40,9 +46,9 @@ module.exports = (schema, options) => {
     schema.statics.translateToken = function(jwt) {
         try {
             let data = JWTUtility.getParser()
-                .validateIssuer('AuthServer')
-                .validateSubject('Login')
-                .parse(jwt, 'secret key');
+                .validateIssuer(issuer)
+                .validateSubject(subject)
+                .parse(jwt, secret);
 
             return this.findById(data.claims.user);
         }
