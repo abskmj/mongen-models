@@ -1,5 +1,3 @@
-const mongoose = require("mongoose");
-
 module.exports = {
     name: "User",
     plugins: {
@@ -7,7 +5,8 @@ module.exports = {
         password: true,
         jwt: {
             secret : 'changed'
-        }
+        },
+        role: true
     },
     schema: {
         name: String,

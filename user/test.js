@@ -5,12 +5,20 @@ const config = require('../config.json');
 
 describe('User', () => {
     let mongoose;
+    
     let User;
     let userData = {
         name: "ABC",
         email: "abc@xyz.com",
         password: 'test123'
     };
+    
+    let Role;
+    
+    let roleData = {
+        name: 'Adminstrator',
+        slug: 'admin'
+    }
 
     before(async() => {
         let mongooseInstance = await mongen.init({
@@ -19,6 +27,7 @@ describe('User', () => {
         });
         mongoose = mongooseInstance;
         User = mongoose.model('User');
+        Role = mongoose.model('Role');
     });
 
     beforeEach(async() => {
@@ -58,7 +67,7 @@ describe('User', () => {
         let savedUser = await User.create(userData);
         
         // validate password
-        let result = savedUser.validatePassword('test123');
+        let result = savedUser.validatePassword(userData.password);
         expect(result).to.equal(true);
     });
     
@@ -82,5 +91,34 @@ describe('User', () => {
         // translate the same JWT to get the user back
         let user = await User.translateToken(jwt);
         expect(user.id).to.equal(savedUser.id);
+    });
+    
+    it('should include all roles', async() => {
+        // create a new role
+        let adminRole = await Role.create(roleData);
+        
+        // create a new user with this role
+        let user = new User(userData);
+        user.roles.push(adminRole);
+        let savedUser = await user.save();
+        
+        // fetch user with roles
+        let foundUser = await User.findOne().populate('roles');
+        expect(foundUser.roles[0].slug).to.equal(roleData.slug);
+    });
+    
+    it('should check for a role', async() => {
+        // create a new role
+        let adminRole = await Role.create(roleData);
+        
+        // create a new user with this role
+        let user = new User(userData);
+        user.roles.push(adminRole);
+        let savedUser = await user.save();
+        
+        // fetch user with roles
+        let foundUser = await User.findOne();
+        let result = await foundUser.hasRole('admin');
+        expect(result).to.equals(true);
     });
 });
