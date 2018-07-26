@@ -4,56 +4,52 @@
 
 const JWTUtility = require('@abskmj/jwt-utility');
 
-module.exports = (schema, {
-    hash = 'HS256',
-    issuer = 'AuthServer',
-    subject = 'Login',
-    expiry = 120000,
-    secret = 'changeit'
-}) => {
-    schema.statics.login = function(data) {
-        try {
-            return this.findOne({ email: data.email })
-                .then(user => {
-                    if (user) {
-                        if (user.validatePassword(data.password)) {
+module.exports = (schema, options) => {
+    const defaults = {
+        jwt: {
+            hash: 'HS256',
+            issuer: 'AuthServer',
+            subject: 'Login',
+            expiry: 120000,
+            secret: 'changeit'
+        },
+        prop: 'email'
+    }
 
-                            let jwt = JWTUtility.getFactory(hash)
-                                .setIssuer(issuer)
-                                .setSubject(subject)
-                                .setExpiry(expiry)
-                                .setClaims({
-                                    user: user._id.toString(),
-                                })
-                                .sign(secret);
+    options = Object.assign(options, defaults);
 
-                            return Promise.resolve(jwt);
-                        }
-                        else {
-                            throw new Error('Password is invalid');
-                        }
-                    }
-                    else {
-                        throw new Error('User not found with email:', data.email);
-                    }
-                });
+    schema.statics.login = async function(data) {
+        let query = {};
+        query[options.prop] = data[options.prop];
+        let inst = await this.findOne(query)
+
+        if (inst) {
+            if (inst.validatePassword(data.password)) {
+
+                return JWTUtility.getFactory(options.jwt.hash)
+                    .setIssuer(options.jwt.issuer)
+                    .setSubject(options.jwt.subject)
+                    .setExpiry(options.jwt.expiry)
+                    .setClaims({
+                        uid: inst._id.toString(),
+                    })
+                    .sign(options.jwt.secret);
+            }
+            else {
+                throw new Error('Password is invalid');
+            }
         }
-        catch (error) {
-            return Promise.reject(error);
+        else {
+            throw new Error(this.modelName + ' not found with ' + options.prop + ': ' + data[options.prop]);
         }
     }
 
-    schema.statics.translateToken = function(jwt) {
-        try {
-            let data = JWTUtility.getParser()
-                .validateIssuer(issuer)
-                .validateSubject(subject)
-                .parse(jwt, secret);
+    schema.statics.translateToken = async function(jwt) {
+        let data = JWTUtility.getParser()
+            .validateIssuer(options.jwt.issuer)
+            .validateSubject(options.jwt.subject)
+            .parse(jwt, options.jwt.secret);
 
-            return this.findById(data.claims.user);
-        }
-        catch (error) {
-            return Promise.reject(error);
-        }
+        return await this.findById(data.claims.uid);
     }
 }

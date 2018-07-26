@@ -5,16 +5,16 @@ const config = require('../config.json');
 
 describe('User', () => {
     let mongoose;
-    
+
     let User;
     let userData = {
         name: "ABC",
         email: "abc@xyz.com",
         password: 'test123'
     };
-    
+
     let Role;
-    
+
     let roleData = {
         name: 'Adminstrator',
         slug: 'admin'
@@ -57,65 +57,65 @@ describe('User', () => {
     it('should set a password', async() => {
         // create a new user
         let savedUser = await User.create(userData);
-        
+
         expect(savedUser).to.have.property('_hash');
         expect(savedUser).to.have.property('_salt');
     });
-    
+
     it('should validate password', async() => {
         // create a new user
         let savedUser = await User.create(userData);
-        
+
         // validate password
         let result = savedUser.validatePassword(userData.password);
         expect(result).to.equal(true);
     });
-    
+
     it('should login with email', async() => {
         // create a new user
         let savedUser = await User.create(userData);
-        
+
         // get a JWT
-        let jwt = await User.login({ email: userData.email , password: userData. password});
+        let jwt = await User.login({ email: userData.email, password: userData.password });
         expect(jwt.split('.')).to.have.lengthOf(3);
     });
-    
+
     it('should translate JWT', async() => {
         // create a new user
         let savedUser = await User.create(userData);
-        
+
         // get a JWT
-        let jwt = await User.login({ email: userData.email , password: userData. password});
+        let jwt = await User.login({ email: userData.email, password: userData.password });
         expect(jwt.split('.')).to.have.lengthOf(3);
-        
+
         // translate the same JWT to get the user back
         let user = await User.translateToken(jwt);
         expect(user.id).to.equal(savedUser.id);
     });
-    
+
     it('should include all roles', async() => {
         // create a new role
         let adminRole = await Role.create(roleData);
-        
+
         // create a new user with this role
         let user = new User(userData);
         user.roles.push(adminRole);
         let savedUser = await user.save();
-        
+
         // fetch user with roles
         let foundUser = await User.findOne().populate('roles');
         expect(foundUser.roles[0].slug).to.equal(roleData.slug);
     });
-    
+
     it('should check for a role', async() => {
         // create a new role
         let adminRole = await Role.create(roleData);
-        
+
         // create a new user with this role
         let user = new User(userData);
         user.roles.push(adminRole);
         let savedUser = await user.save();
-        
+
         // fetch user with roles
         let foundUser = await User.findOne();
         let result = await foundUser.hasRole('admin');
