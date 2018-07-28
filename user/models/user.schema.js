@@ -1,7 +1,7 @@
 module.exports = {
     name: "User",
     plugins: {
-        audit: true,
+        timestamps: true,
         password: true,
         jwt: {
             secret : 'changed'

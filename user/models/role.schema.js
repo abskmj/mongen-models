@@ -1,7 +1,7 @@
 module.exports = {
     name: "Role",
     plugins: {
-        audit: true,
+        timestamps: true,
     },
     schema: {
         name: String,
