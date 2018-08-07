@@ -4,12 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "nodemon --exec \"DEBUG=mongen mocha user/test.js\""
+    "test": "nodemon --exec \"mocha user/test.js\""
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@abskmj/jwt-utility": "0.0.3",
+    "@abskmj/mongen": "^1.0.0",
     "mongoose": "^5.2.5"
   },
   "devDependencies": {

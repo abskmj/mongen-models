@@ -6,7 +6,8 @@ module.exports = {
         jwt: {
             secret : 'changed'
         },
-        role: true
+        role: true,
+        verification: true
     },
     schema: {
         name: String,
